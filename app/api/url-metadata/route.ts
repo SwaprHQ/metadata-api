@@ -90,12 +90,7 @@ export async function GET(request: NextRequest) {
 
     console.log("get page content...");
 
-    const html =
-      process.env.NODE_ENV === "development"
-        ? await page.content()
-        : await page.evaluate(() => {
-            return document?.querySelector("body")?.innerHTML;
-          });
+    const html = await page.content();
 
     console.log("parse html...");
     const $ = cheerio.load(html);
