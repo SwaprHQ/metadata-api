@@ -4,34 +4,25 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next experimental-compile",
     "start": "next start",
-    "lint": "next lint",
-    "pages:build": "npx @cloudflare/next-on-pages",
-    "preview": "npm run pages:build && wrangler pages dev",
-    "deploy": "npm run pages:build && wrangler pages deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
     "chrome-aws-lambda": "^10.1.0",
-    "next": "14.1.0",
-    "puppeteer": "^22.14.0",
+    "critters": "^0.0.24",
+    "next": "14.1.4",
     "puppeteer-core": "^22.14.0",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.12.1",
-    "@cloudflare/workers-types": "^4.20240722.0",
+    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "eslint-plugin-next-on-pages": "^1.12.1",
-    "typescript": "^5",
-    "vercel": "^35.2.0",
-    "wrangler": "^3.66.0"
+    "eslint-config-next": "14.2.5"
   }
 }
