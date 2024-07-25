@@ -1,51 +1,65 @@
 import { NextResponse, NextRequest } from "next/server";
 import puppeteer from "puppeteer-core";
-const chrome = require("@sparticuz/chromium");
 const cheerio = require("cheerio");
+const chrome = require("@sparticuz/chromium");
 
-/** The code below determines the executable location for Chrome to
- * start up and take the screenshot when running a local development environment.
+// Config CORS
+// ========================================================
+/**
  *
- * If the code is running on Windows, find chrome.exe in the default location.
- * If the code is running on Linux, find the Chrome installation in the default location.
- * If the code is running on MacOS, find the Chrome installation in the default location.
- * You may need to update this code when running it locally depending on the location of
- * your Chrome installation on your operating system.
+ * @param origin
+ * @returns
+ */
+const getCorsHeaders = (origin: string) => {
+  // Default options
+  const headers = {
+    "Access-Control-Allow-Methods": `${process.env.ALLOWED_METHODS}`,
+    "Access-Control-Allow-Headers": `${process.env.ALLOWED_HEADERS}`,
+    "Access-Control-Allow-Origin": `${process.env.DOMAIN_URL}`,
+  };
 
- via https://www.contentful.com/blog/2021/03/17/puppeteer-node-open-graph-screenshot-for-socials/
-*/
+  // If no allowed origin is set to default server origin
+  if (!process.env.ALLOWED_ORIGIN || !origin) return headers;
 
-export const dynamicParams = true;
-export const revalidate = false;
-export const fetchCache = "auto";
-export const runtime = "nodejs";
-export const preferredRegion = "auto";
-export const dynamic = "force-dynamic";
+  // If allowed origin is set, check if origin is in allowed origins
+  const allowedOrigins = process.env.ALLOWED_ORIGIN.split(",");
 
-const exePath =
-  process.platform === "win32"
-    ? "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-    : process.platform === "linux"
-    ? "/usr/bin/google-chrome"
-    : "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  // Validate server origin
+  if (allowedOrigins.includes("*")) {
+    headers["Access-Control-Allow-Origin"] = "*";
+  } else if (allowedOrigins.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+
+  // Return result
+  return headers;
+};
+
+/**
+ * Basic OPTIONS Request to simuluate OPTIONS preflight request for mutative requests
+ */
+export const OPTIONS = async (request: NextRequest) => {
+  // Return Response
+  return NextResponse.json(
+    {},
+    {
+      status: 200,
+      headers: getCorsHeaders(request.headers.get("origin") || ""),
+    }
+  );
+};
 
 const getOptions = async () => {
   let options;
-  if (process.env.NODE_ENV === "production") {
-    options = {
-      args: chrome.args,
-      defaultViewport: chrome.defaultViewport,
-      executablePath: await chrome.executablePath(),
-      headless: true,
-      ignoreHTTPSErrors: true,
-    };
-  } else {
-    options = {
-      args: [],
-      executablePath: exePath,
-      headless: true,
-    };
-  }
+
+  options = {
+    args: chrome.args,
+    defaultViewport: chrome.defaultViewport,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    headless: true,
+    ignoreHTTPSErrors: true,
+  };
+
   return options;
 };
 
@@ -63,6 +77,7 @@ export async function GET(request: NextRequest) {
     console.log("configuring chrome...");
     const options = await getOptions();
 
+    console.log("options", options);
     console.log("launching browser...");
     const browser = await puppeteer.launch(options);
 
@@ -94,22 +109,27 @@ export async function GET(request: NextRequest) {
 
     console.log("parse html...");
     const $ = cheerio.load(html);
-
-    const articlePusblishTime = $('[property="article:published_time"]').attr(
+    const articlePublishTime = $('[property="article:published_time"]').attr(
       "content"
     );
     const ogImage = $('[property="og:image"]').attr("content");
     const ogTitle = $('[property="og:title"]').attr("content");
 
-    console.log({ articlePusblishTime, ogImage, ogTitle });
+    console.log({ articlePublishTime, ogImage, ogTitle });
 
     console.log("closing browser...");
     await browser.close();
 
     console.log("done.");
     return NextResponse.json(
-      { articlePusblishTime, ogImage, ogTitle },
-      { status: 201 }
+      { articlePublishTime, ogImage, ogTitle },
+      {
+        status: 200,
+        headers: {
+          ...getCorsHeaders(request.headers.get("origin") || ""),
+          "Cache-Control": `public, max-age=${process.env.MAX_AGE || "10800"}`,
+        },
+      }
     );
   } catch (error) {
     console.log(error);
