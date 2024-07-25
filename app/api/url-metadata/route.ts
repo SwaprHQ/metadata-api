@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import puppeteer from "puppeteer-core";
+const chrome = require("@sparticuz/chromium");
 const cheerio = require("cheerio");
-const chrome = require("chrome-aws-lambda");
 
 /** The code below determines the executable location for Chrome to
  * start up and take the screenshot when running a local development environment.
@@ -34,8 +34,10 @@ const getOptions = async () => {
   if (process.env.NODE_ENV === "production") {
     options = {
       args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
+      defaultViewport: chrome.defaultViewport,
+      executablePath: await chrome.executablePath(),
+      headless: true,
+      ignoreHTTPSErrors: true,
     };
   } else {
     options = {

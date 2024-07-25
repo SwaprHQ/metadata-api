@@ -2,7 +2,7 @@
 const nextConfig = {
   webpack: (config, { webpack }) => {
     //config.externals = ["chrome-aws-lambda", "puppeteer-core"];
-    config.externals = ["chrome-aws-lambda", "puppeteer-core", "picocolors"];
+    config.externals = ["@sparticuz/chromium", "puppeteer-core", "picocolors"];
 
     return config;
   },
